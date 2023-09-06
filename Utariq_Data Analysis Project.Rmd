@@ -1,0 +1,432 @@
+---
+title: "Data Analysis Project"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      message = FALSE, 
+                      warning = FALSE,
+                      comment = "")
+```
+
+
+
+# Student Information
+
+**Name**: Ubaid Ullah Tariq
+**G Number**: G01303491
+
+
+
+
+# Introduction
+
+This semester we will be working with a dataset of auto claims filed by customers of an automobile insurance company located in the southwest and western regions of the United States.
+
+Insurance companies depend on accurate pricing estimates to maintain profitability. Auto policies must be priced so that the insurance company makes a profit in the long run, given the costs of their customers' payouts for accident repairs, total loss car replacements, medical fees, and legal fees.
+
+The executives at this insurance company have noticed declining profitability over the last several years and have hired you as a data science consultant to evaluate their claims data and make recommendations on pricing, customer behavior, and car insurance policy adjustments.
+
+The objective of this project is to perform an exploratory data analysis on the claims_df dataset and produce an executive summary of your key insights and recommendations to the executive team at the insurance company.
+
+Before you begin, take a moment to read through the following insurance company terms to familiarize yourself with the industry:  [Auto Insurance
+Terms](https://www.iii.org/article/auto-insurance-jargon-buster "Auto Insurance Terms"){target="_blank"} 
+
+
+
+## Auto Claims Data
+
+The `claims_df` data frame is loaded below and consists of 6,249 auto claims submitted by customers of the insurance company. The rows in this data frame represent a single claim with all of the associated features that are displayed in the table below.
+
+**Note**: If you have not installed the `tidyverse` package, please do so by going to the `Packages` tab in the lower right section of RStudio, select the `Install` button and type `tidyverse` into the prompt. If you cannot load the data, then try downloading the latest version of R (at least 4.0). The `readRDS()` function has different behavior in older versions of `R` and may cause loading issues.
+
+
+```{r}
+library(tidyverse)
+
+claims_df <- readRDS(url('https://gmubusinessanalytics.netlify.app/data/claims_df.rds'))
+
+```
+
+
+### Raw Data
+
+```{r}
+
+claims_df
+
+```
+<br>
+<br>
+
+
+# Exploratory Data Analysis
+
+
+Executives at this company have hired you as a data science consultant to evaluate their claims data and make recommendations on pricing, customer behavior, and car insurance policy adjustments.
+
+You must think of **at least 8 relevant questions** that will provide evidence for your recommendations.
+
+The goal of your analysis should be discovering which variables drive the differences between customers with large lifetime values and
+customers who cost the company more than they provide in revenue through monthly premiums.
+
+Some of the many questions you can explore include:
+
+-   Are there types of customers, based on their policy or demographics,
+    that are highly profitable?
+
+-   Do certain policies have a lower number of claims, leading to large
+    profits?
+
+-   Are there "problem customers" which have a large number of claims?
+
+You must answer each question and provide supporting data summaries with either a summary data frame (using `dplyr`/`tidyr`) or a plot (using `ggplot`) or both.
+
+In total, you must have a minimum of 5 plots and 4 summary data frames for the exploratory data analysis section. Among the plots you produce, you must have at least 4 different types (ex. box plot, bar chart, histogram, heat map, etc...)
+
+Each question must be answered with supporting evidence from your tables and plots.
+
+
+
+
+
+## Question 1
+
+**Question**:
+Exists an optimal number of months for a membership that will generate the most revenue for the business?
+
+**Answer**:
+All of the customers who generated net revenues more than the average revenue per customer (> $922.1) were combined into a new data set. The modified data set was used to create a density graphic. The graph shows that in terms of income earned, consumers with active policies for 40 to 55 months proved to be quite profitable. Highly lucrative customers of the firm had their insurance in force for an average of 46.42 months.
+
+```{r}
+summary(claims_df)
+
+Good_customers <- claims_df %>% filter(customer_lifetime_value > 922.1)
+view(Good_customers)
+
+summary(Good_customers)
+
+D <- ggplot(Good_customers, aes(months_policy_active)) + geom_density() + xlab("Months the policy has been in effect") + ylab("Density")+ ggtitle(" The Company's Distribution of the Months Policy was in effect \n highly profitable clients") + center_title
+plot(D)
+
+```
+
+
+## Question 2
+
+**Question**:
+Based on their state of residence, are there particular client kinds that are very profitable?
+
+**Answer**:
+According to the graph, the clients from Oregon, California and Arizona produced extremely profitable customer lifetime value, generating net sales for the firm of $1898706, $1670078, and $1129186, respectively. Customers from the states of Nevada and Washington demonstrated the lowest returns on investment, with net income of $480355 and $583650, respectively.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+Cus <- ggplot(data=claims_df,aes(x=reorder(customer_state, customer_lifetime_value), y=customer_lifetime_value,fill = customer_state)) + geom_bar(stat="identity",show.legend = FALSE) + xlab("State") + ylab("Customer Lifetime Value")+expand_limits(y=-1000000) +ggtitle("Customer Lifetime Value vs Customer State") + theme(plot.title=element_text(hjust=0.5))
+options(scipen = 999)
+plot(Cus)
+
+center_title <- theme(plot.title=element_text(hjust=0.5))
+
+Total_Oregon_Revenue <- claims_df %>% filter(customer_state == "Oregon") %>% summarize(sum(customer_lifetime_value))
+
+Total_California_Revenue <- claims_df %>% filter(customer_state == "California") %>% summarize(sum(customer_lifetime_value))
+
+Total_Arizona_Revenue <- claims_df %>% filter(customer_state == "Arizona") %>% summarize(sum(customer_lifetime_value))
+
+Total_Washington_Revenue <- claims_df %>% filter(customer_state == "Washington") %>% summarize(sum(customer_lifetime_value))
+
+Total_Nevada_Revenue <- claims_df %>% filter(customer_state == "Nevada") %>% summarize(sum(customer_lifetime_value))
+
+df0 <- data.frame(Total_California_Revenue,Total_Oregon_Revenue,Total_Arizona_Revenue,Total_Washington_Revenue,Total_Nevada_Revenue)
+
+colnames(df0) <- c("Total Oregon Revenue","Total California Revenue","Total Arizona Revenue","Total Washington Revenue","Total Nevada Revenue")
+
+view(df0)
+
+```
+
+
+## Question 3
+
+**Question**:
+Do some insurers have fewer claims, generating significant profits?
+
+**Answer**:
+A total of 14946 claims were submitted. According to the graph and data searches, clients with personal policies had the most claims 11131, followed by those with corporate policies 3175. Customers with the Special policy made the fewest claims 640.
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+C <- ggplot(data=claims_df,aes(x=policy, y=total_claims,fill=policy)) + geom_bar(stat="identity",show.legend = FALSE) + xlab("Customer's Policy") + ylab("Total Claims") + ggtitle("In comparison to the customer's insurance policy \n Total Numer of Claims") + theme(plot.title=element_text(hjust=0.5))
+plot(C)
+
+Total_claims <- claims_df %>% summarize(sum(total_claims))
+view(Total_claims)
+
+Total_Corporate_Claims <- claims_df %>% filter(policy == "Corporate") %>% summarize(sum(total_claims))
+
+Total_Personal_Claims <- claims_df %>% filter(policy == "Personal") %>% summarize(sum(total_claims))
+
+Total_Special_Claims <- claims_df %>% filter(policy == "Special") %>% summarize(sum(total_claims))
+
+df2 <- data.frame(Total_claims,Total_Corporate_Claims,Total_Personal_Claims,Total_Special_Claims)
+
+colnames(df2) <- c("Total Claims","Total Corporate Claims","Total Personal Claims","Total Special Claims")
+
+view(df2)
+
+```
+
+
+## Question 4
+
+**Question**:
+Does the amount of claims depend on the Sales channel used to on-board customers?
+
+**Answer**:
+The distribution of the number of clients attracted by each of the many marketing channels is shown in the histogram. To ascertain the average claims submitted by clients enrolled through a certain sales channel, a thorough study of the filtered data on each of the marketing channels was carried out. The data shows that consumers who joined up through the website had the greatest claims on average, while those who were lured by the Agent had the lowest claims on average (2.38 per customer) (2.41 per customer).
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+B <- ggplot(data=claims_df,aes(x=sales_channel,fill=sales_channel)) + geom_histogram(stat="count",show.legend = FALSE) +ggtitle("Total clients attracted through each of the sales channels") + center_title +xlab("Sales Channel")+ylab("number of new clients signed up")
+plot(B)
+
+Agent_signedup_customer <- claims_df %>% filter(sales_channel == "Agent")
+str(Agent_signedup_customer)
+view(Agent_signedup_customer)
+Total_Agent_Claims <- claims_df %>% filter(sales_channel == "Agent") %>% summarize(sum(total_claims))
+
+view(Total_Agent_Claims)
+
+Branch_signedup_customer <- claims_df %>% filter(sales_channel == "Branch")
+str(Branch_signedup_customer)
+view(Branch_signedup_customer)
+Total_Branch_Claims <- claims_df %>% filter(sales_channel == "Branch") %>% summarize(sum(total_claims))
+
+view(Total_Branch_Claims)
+
+Call_signedup_Customer <- claims_df %>% filter(sales_channel == "Call Center")
+str(Call_signedup_Customer)
+view(Call_signedup_Customer)
+Total_Call_Claims <- claims_df %>% filter(sales_channel == "Call Center") %>% summarize(sum(total_claims))
+
+view(Total_Call_Claims)
+
+Web_signedup_customer <- claims_df %>% filter(sales_channel == "Web")
+str(Web_signedup_customer)
+view(Web_signedup_customer)
+Total_Web_Claims <- claims_df %>% filter(sales_channel == "Web") %>% summarize(sum(total_claims))
+
+view(Total_Web_Claims)
+
+df3 <- data.frame(Total_Agent_Claims/2359,Total_Branch_Claims/1771,Total_Call_Claims/1218,Total_Web_Claims/901)
+
+colnames(df3) <- c("Agent Signedup Customer claims (Average)","Branch Signedup Customer claims (Average)","Call Center Signedup Customer claims (Average)","Web Signedup Customer claims (Average)")
+
+view(df3)
+
+```
+
+
+## Question 5
+
+**Question**:
+What effect do client gender and monthly premium have on the business's revenues?
+
+**Answer**:
+To comprehend how the customer's gender and monthly premium affect the business's income, a scatter plot was made. According to the graph, a client has a higher likelihood of contributing to the company's earnings the more they spend in monthly premiums. The findings also showed that, on average, Male clients cost the business more than Female customers did. The firm had to pay out a total of $1213122 to its male customers in claims, whereas it had to spend a far smaller sum of $758704 to settle the claims of its female customers.
+
+
+```{r}
+g <- ggplot(data=claims_df,aes(x= monthly_premium, y = customer_lifetime_value,color=gender))  +geom_point(show.legend = FALSE) + facet_grid( ~gender) +xlab("Monthly Premium") +ylab("Customer Lifetime Value") +ggtitle("The effects of Monthly Premium Amount and Customer Gender on \n the Net Revenue Generated") + center_title
+plot(g)
+
+Male_losses <- claims_df %>% filter(gender == "Male",customer_lifetime_value < 0) %>% summarize(sum(customer_lifetime_value))
+
+Female_losses <- claims_df %>% filter(gender == "Female",customer_lifetime_value < 0) %>% summarize(sum(customer_lifetime_value))
+
+Losses <- data.frame(Male_losses,Female_losses)
+
+colnames(Losses) <- c("Net Male Losses","Net Female Losses")
+view(Losses)
+
+```
+
+
+## Question 6
+
+**Question**:
+What impact do residential demography and customer gender have on a company's profitability?
+
+**Answer**:
+A second bar chart was created after further analysis of the data to examine the makeup and distribution of the very profitable clients of the business. The data showed that 931 suburban women produced above-average sales for the business, which is much more than the local men did 219. Both the graphs and the data frames demonstrate that the majority of the extremely lucrative clients of the business are women.
+
+```{r}
+summary(claims_df)
+
+E <- ggplot(data= Good_customers,aes(x= residence_type, y = customer_lifetime_value,color=gender,fill=gender))  +geom_bar(stat="identity",show.legend = FALSE) + facet_grid( ~gender) + xlab("Customer's Residence Type") + ylab("Net Revenue Generated") +ggtitle("The relationship between a customer's gender and residence type \n the Lifetime Revenue Generated") + center_title
+plot(E)
+
+
+Suburban_women <- Good_customers %>% filter(residence_type == "Suburban",gender == "Female") %>% summarize(sum(customer_lifetime_value))
+
+Urban_women <- Good_customers %>% filter(residence_type == "Urban",gender == "Female") %>% summarize(sum(customer_lifetime_value))
+
+Rural_women <- Good_customers %>% filter(residence_type == "Rural",gender == "Female") %>% summarize(sum(customer_lifetime_value))
+
+Suburban_men <- Good_customers %>% filter(residence_type == "Suburban",gender == "Male") %>% summarize(sum(customer_lifetime_value))
+
+Urban_men <- Good_customers %>% filter(residence_type == "Urban",gender == "Male") %>% summarize(sum(customer_lifetime_value))
+
+Rural_men <- Good_customers %>% filter(residence_type == "Rural",gender == "Male") %>% summarize(sum(customer_lifetime_value))
+
+
+
+Suburban_women_count <- Good_customers %>% filter(residence_type == "Suburban",gender == "Female") %>% count()
+
+Urban_women_count <- Good_customers %>% filter(residence_type == "Urban",gender == "Female") %>% count()
+
+Rural_women_count <- Good_customers %>% filter(residence_type == "Rural",gender == "Female") %>% count()
+
+Suburban_men_count <- Good_customers %>% filter(residence_type == "Suburban",gender == "Male") %>% count()
+
+Urban_men_count <- Good_customers %>% filter(residence_type == "Urban",gender == "Male") %>% count()
+
+Rural_men_count <- Good_customers %>% filter(residence_type == "Rural",gender == "Male") %>% count()
+
+Net_revenue_good_customer <- data.frame(Suburban_women,Urban_women,Rural_women,Suburban_men,Urban_men,Rural_men)
+
+Suburban_women_c <- c(Suburban_women , Suburban_women_count)
+view(Suburban_women_c)
+Suburban_men_c <- c(Suburban_men,Suburban_men_count)
+view(Suburban_men_c)
+Urban_women_c <- c(Urban_women,Urban_women_count)
+Urban_men_c <- c(Urban_men,Urban_men_count)
+
+Rural_women_c <- c(Rural_women,Rural_women_count)
+Rural_men_c <- c(Rural_men,Rural_men_count)
+
+Final_df <- data.frame(Suburban_women_c,Suburban_men_c,Urban_women_c,Urban_men_c,Rural_women_c,Rural_men_c)
+
+Demography <- c("Suburban","Urban","Rural","Suburban","Urban","Rural")
+Gender <- c("Female","Female","Female","Male","Male","Male")
+Net_Revenue <- c(2531073,2011879,731172,552967,815521,466730)
+Counts <- c(931,692,288,219,315,191)
+
+f_df <- data.frame(Demography,Gender,Net_Revenue,Counts)
+view(f_df)
+
+F <- ggplot(f_df,aes(x= Demography, y = Counts,color=Gender,fill=Gender))  +geom_bar(stat="identity",show.legend = FALSE) + facet_grid( ~Gender) + xlab("Customer's Residence Type") + ylab("Count") +ggtitle("The Influence of Customer Gender and Residential Type on \n Lifetime Revenue Generated Scale") + center_title
+plot(F)
+
+```
+
+
+## Question 7
+
+**Question**:
+What type of coverage boosted the business's revenue generation the most?
+
+**Answer**:
+The original data set was plotted using a violin plot. The distribution of each form of coverage on the revenue scale is better understood thanks to the violin plot. The graph indicates that the majority of the data points for customers with Extended and Premium coverage are higher than zero. The Lifetime revenues for the Basic coverage, on the other hand, are uniformly spread around the figure of zero, showing that a large number of customers with the coverage produced net revenues for the firm that were less than zero. Customers with Basic, Extended, and Premium coverage had average Customer Lifetime Values of $326, $1538, and $2879, respectively.
+
+```{r}
+F <- ggplot(claims_df, aes(coverage, customer_lifetime_value,fill=coverage)) + geom_violin(show.legend = FALSE) +xlab("Coverage") +ylab("Customer Lifetime Value") + ggtitle(" Net Income generated by each Insurance \n Coverage Types") + center_title
+plot(F)
+
+basic_lifetime_value <- claims_df %>% filter(coverage == "Basic") %>% summarize(mean(customer_lifetime_value))
+
+extended_lifetime_value <- claims_df %>% filter(coverage == "Extended") %>% summarize(mean(customer_lifetime_value))
+
+premium_lifetime_value <- claims_df %>% filter(coverage == "Premium") %>% summarize(mean(customer_lifetime_value))
+
+df5 <- data.frame(basic_lifetime_value,extended_lifetime_value,premium_lifetime_value)
+
+colnames(df5) <- c("Basic Policy Lifetime Revenue (Average)","Extended Policy Lifetime Revenue (Average)","Premium Policy Lifetime Revenue (Average)")
+
+view(df5)
+
+```
+
+
+## Question 8
+
+**Question**:
+How does the kind of vehicle affect the amount of money a company makes over the course of a customer's lifetime?
+
+**Answer**:
+To determine which vehicle class brought in the most money for the company, a box-plot was made. The box plot showed that the highest average lifetime sales of luxury SUVs, luxury cars, and SUVs were $6381, $5669, and $1861 correspondingly. Two-door and four-door vehicles, on the other hand, were at the low end of the scale, with average lifetime earnings of $269 and $271, respectively.
+
+```{r}
+H <- ggplot(claims_df, aes(vehicle_class, customer_lifetime_value)) + geom_boxplot() +xlab("Vehicle Class") +ylab("Customer Lifetime Value") + ggtitle(" Customer's Vehicle Class Effects on the \n Customer Lifetime Value") +center_title + coord_flip()
+plot(H)
+
+twodoorcar_lifetime_value <- claims_df %>% filter(vehicle_class == "Two-Door Car") %>% summarize(mean(customer_lifetime_value))
+
+fourdoorcar_lifetime_value <- claims_df %>% filter(vehicle_class == "Four-Door Car") %>% summarize(mean(customer_lifetime_value))
+
+sportscar_lifetime_value <- claims_df %>% filter(vehicle_class == "Sports Car") %>% summarize(mean(customer_lifetime_value))
+
+suv_lifetime_value <- claims_df %>% filter(vehicle_class == "SUV") %>% summarize(mean(customer_lifetime_value))
+
+luxurycar_lifetime_value <- claims_df %>% filter(vehicle_class == "Luxury Car") %>% summarize(mean(customer_lifetime_value))
+
+luxurysuv_lifetime_value <- claims_df %>% filter(vehicle_class == "Luxury SUV") %>% summarize(mean(customer_lifetime_value))
+
+df7 <- data.frame(twodoorcar_lifetime_value,fourdoorcar_lifetime_value,sportscar_lifetime_value,suv_lifetime_value,luxurycar_lifetime_value,luxurysuv_lifetime_value)
+
+colnames(df7) <- c("Two Door Car Lifetime Revenue (Average)","Four Door Car Lifetime Revenue (Average)","Sports Car Lifetime Revenue (Average)","SUV Lifetime Revenue (Average)","Luxury Car Lifetime Revenue (Average)","Luxury SUV Lifetime Revenue (Average)")
+
+view(df7)
+
+```
+
+
+
+## Executive Summary
+
+Introduction:
+
+In order to determine the factors affecting the profitability of the organization, the project's objective was to do an explanatory data analysis on a data set of the vehicle claims submitted by clients of the automobile insurance company. The analysis's main goal was to examine the most and least lucrative client categories for any observable trends or warning signs that would enable the business to reduce losses and, as a result, boost revenues.In order to maximize the usefulness of the insights obtained, a series of 8 questions were created and responded to. The questions investigated the effects of customer demographics, the sales channel used to bring in the client, the customer's class of car, and the customer's gender on the revenue produced. The impact of insurance policy and coverage type on the company's net revenue was also examined by the questions.
+
+
+Major Findings:
+
+While analyzing the data set, several intriguing insights were found. Clients from California, Oregon, and Arizona turned out to be the most profitable of all the other states' customers. Knowing this can make it easier for the business to focus its marketing efforts on the regions where its client base brings in the most money. Customers with the Personal Policy filed the most claims. This knowledge might aid the business in choosing which policy to sanction or reward in order to increase revenue. Customers who joined up through the website had the greatest claims on average, while those who signed up through the Agent had the lowest claims on average.When deciding which sales channel to use the most, the company's marketing and sales staff may use this information to their advantage. Customers who had active policies over 40 to 55 months or more proved to be quite lucrative in terms of income. 
+
+The average length of time that policies were in effect for the extremely profitable customers (those who generated net sales greater than the average revenue per customer (> $922.1)) was 46.42 months. Due to this insight, the business may decide to start targeted advertising initiatives to draw in repeat customers. For the corporation, the luxury SUVs, luxury cars, and SUVs produced the greatest average lifetime revenues. Making informed judgments may be made easier if decision-makers knew which vehicle type generated the greatest revenue for the organization.Most of the data points for consumers with Extended and Premium coverage are above the zero line (below which the company starts incurring losses). 
+
+The Lifetime revenues for the Basic coverage, on the other hand, are uniformly spread around the figure of zero, showing that a large number of customers with the coverage produced net revenues for the firm that were less than zero. When creating the company's loss mitigation strategy, this information may prove to be quite valuable.Greater than any other group or gender, Suburban Women brought in $531073 in earnings for the firm. This finding might assist the business in creating offerings that are specifically customized to its target demographic. A total of $1213122 in claims from the company's male consumers had to be paid out, but claims from the company's female clients only required spending $758704 in total. By using this statistics, the business might reduce losses by setting insurance rates.
+
+
+Recommendations:
+
+Revenues generated by customers from California and Oregon were $189,870,6 and $167,007,8 respectively, much more than those from any other state. Based on this finding, the business should launch significant marketing campaigns that specifically target these two states. This would increase the possibility that the business would attract clients who would turn out to be very profitable.Customers with Personal insurance policies reported a total of 11131 claims, whereas customers with Corporate (3175 claims) and Special plans filed much fewer claims (640). According to the statistics, the business could try to execute B2B marketing campaigns and provide Employer/Affinity group discounts in order to draw business clients, which might perhaps increase the company's net income.
+
+The filtered data for each marketing channel was subjected to a thorough study in order to ascertain the typical claims made by clients enrolled through each channel of sales. According to the statistics, clients who joined up through the internet had an average of the greatest claims while those who were lured by the agent had the lowest claims on average 2.38 per customer 2.41 per customer. Based on this data, the business should aim to give agent marketing top priority above all other sales channels. This might guarantee that the business attracts customers who are less likely to submit more claims, increasing profits.Only those clients who have been with the business for more than three years should be eligible for special discounts from the business. This is based on the observation that clients with active policies for 40 to 55 months proved to be quite lucrative in terms of income produced. Highly lucrative customers of the firm had their insurance in force for an average of 46.42 months. The firm would benefit from the special discounts for loyal customers in terms of client retention, which would result in higher sales.
+
+Luxury SUVs, Luxury Cars, and Sports Cars brought in an average of $6,381, $5,669, and $2,158 in lifetime revenues, compared to the ordinary two-door and four-door car's $269 and $271, respectively. Based on this data, the business should diversify in order to draw in customers that drive luxury and sports automobiles. To become the customer's top option in this market, the firm should provide discounts and reduce rates on certain vehicles. Long-term, this would aid the business in generating more money.Customers with Basic, Extended, and Premium coverage had average Customer Lifetime Values of $326, $1,538 and $2,879, respectively. By offering incentives for those plans, the business should persuade an increasing number of clients to choose Extended and Premium coverage.In comparison to their male counterparts ($552,967 and $ 815,521), the Suburban and Urban Women consumers contributed the most to the company's higher-than-average revenue, totaling $2,531,073 and $2,011,879, respectively. The business had to pay out a total of $1,213,122 to its male customers in claims, but it had to spend a far smaller sum of $758,704 to settle the claims of its female customers. These statistics should guide the company's efforts in developing and implementing highly targeted ads to appeal to urban and suburban women. Additionally, the business may provide ladies in these groups with cheaper rates, which would greatly increase its earnings.
+
+
+
+
+
+
+
+
+
+
+
+
+
